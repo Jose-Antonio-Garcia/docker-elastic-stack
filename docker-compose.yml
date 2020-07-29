@@ -1,0 +1,43 @@
+version: '3.2'
+services:
+  reverseproxy:     
+    build:
+      context: nginx/        
+    ports:
+      - 80:8080
+    restart: always
+  elasticsearch2:
+    build:
+      context: elasticsearch/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    ports:
+      - 9200:9200  
+    volumes:
+      - type: bind
+        source: ./elasticsearch/config/elasticsearch.yml
+        target: /usr/share/elasticsearch/config/elasticsearch.yml
+        read_only: true
+      - type: volume
+        source: elasticsearch_IOT
+        target: /usr/share/elasticsearch/data
+    depends_on:
+      - reverseproxy  
+    environment:
+      ES_JAVA_OPTS: "-Xmx256m -Xms256m"
+      ELASTIC_PASSWORD: 5F654AEB37
+  kibana2:
+    build:
+      context: kibana/
+      args:
+        ELK_VERSION: $ELK_VERSION
+    volumes:
+      - type: bind
+        source: ./kibana/config/kibana.yml
+        target: /usr/share/kibana/config/kibana.yml
+        read_only: true
+    depends_on:
+      - elasticsearch2
+      - reverseproxy
+volumes:
+  elasticsearch_IOT:
